@@ -85,8 +85,8 @@
     ;; We have the old custom-library, hack around it!
     (defmacro defgroup (&rest args)
       nil)
-    (defmacro defcustom (var value doc &rest args) 
-      (` (defvar (, var) (, value) (, doc))))))
+    (defmacro defcustom (var value doc &rest args)
+      `(defvar ,var ,value ,doc))))
 
 (defgroup filladapt nil
   "Enhanced filling"
@@ -458,24 +458,30 @@ With debugging enabled, filladapt will
     ;; filladapt-adapt failed, so do fill-paragraph normally.
     (filladapt-funcall function arg)))
 
-(defun fill-paragraph (arg)
+(defun fill-paragraph (&optional justify region)
   "Fill paragraph at or after point.  Prefix arg means justify as well.
 
-(This function has been overloaded with the `filladapt' version.)
+\(This function has been overloaded with the `filladapt' version.)
 
 If `sentence-end-double-space' is non-nil, then period followed by one
 space does not end a sentence, so don't break a line there.
 
 If `fill-paragraph-function' is non-nil, we call it (passing our
 argument to it), and if it returns non-nil, we simply return its value."
-  (interactive "*P")
+  ;;(interactive "*P")
+  (interactive (progn (barf-if-buffer-read-only)
+                      (list (if current-prefix-arg 'full) t)))
   (let ((filladapt-inside-filladapt t))
-    (filladapt-fill-paragraph 'fill-paragraph arg)))
+    (save-restriction
+      (and region transient-mark-mode mark-active
+           (not (eq (region-beginning) (region-end)))
+           (narrow-to-region (region-beginning) (region-end)))
+      (filladapt-fill-paragraph 'fill-paragraph justify))))
 
 (defun lisp-fill-paragraph (&optional arg)
   "Like \\[fill-paragraph], but handle Emacs Lisp comments.
 
-(This function has been overloaded with the `filladapt' version.)
+\(This function has been overloaded with the `filladapt' version.)
 
 If any of the current line is a comment, fill the comment or the
 paragraph of it that point is in, preserving the comment's indentation
@@ -488,7 +494,7 @@ and initial semicolons."
 				 nosqueeze squeeze-after)
   "Fill the region as one paragraph.
 
-(This function has been overloaded with the `filladapt' version.)
+\(This function has been overloaded with the `filladapt' version.)
 
 It removes any paragraph breaks in the region and extra newlines at the end,
 indents and fills lines between the margins given by the
@@ -553,7 +559,7 @@ space does not end a sentence, so don't break a line there."
 (defun fill-region (beg end &optional justify nosqueeze to-eop)
   "Fill each of the paragraphs in the region.
 
-(This function has been overloaded with the `filladapt' version.)
+\(This function has been overloaded with the `filladapt' version.)
 
 Prefix arg (non-nil third arg, if called from program) means justify as well.
 
